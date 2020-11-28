@@ -11,13 +11,11 @@ const ComponentA = {
   },
   template: `
   <div>
-    <br/>
     Hello from component-a
-    <br/>
     <input v-model="message"/>
     <p>{{ this.message }}</p>
   </div>`,
-  created: function() {
+  beforeCreate: function() {
     store.registerModule(
     'a',
       {
