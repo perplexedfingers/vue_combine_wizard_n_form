@@ -13,16 +13,21 @@ const ComponentA = {
   },
   methods: {
     submit() {
-      this.$ncformValidate('your-form-name').then(data => {
-        if (data.result) {
-          const numberShowsDOM = document.querySelector('label[title="numberShows"]')
-          const numberShowsDOMHides = numberShowsDOM.parentNode.style.display === "none"
-          if (numberShowsDOMHides) {
-            delete this.$data.putDataHere.numberShows
+      return new Promise((resolve, reject) => {
+        this.$ncformValidate('your-form-name').then(data => {
+          if (data.result) {
+            const numberShowsDOM = document.querySelector('label[title="numberShows"]')
+            const numberShowsDOMHides = numberShowsDOM.parentNode.style.display === "none"
+            if (numberShowsDOMHides) {
+              delete this.$data.putDataHere.numberShows
+            }
+            store.commit('a/set', this.$data.putDataHere)
+            resolve(true)
+          } else {
+            reject('blah')
           }
-          store.commit('a/set', this.$data.putDataHere)
-        }
-      });
+        });
+      })
     }
   },
   data() {
@@ -31,7 +36,12 @@ const ComponentA = {
         type: 'object',
         properties: {
           name: {
-            type: 'string'
+            type: 'string',
+            rules: {
+              required: {
+                value: true
+              }
+            }
           },
           numberShows: {
             type: 'boolean',
@@ -46,13 +56,19 @@ const ComponentA = {
   },
   template: `
   <div>
-    <ncform
-      :form-schema="formSchema"
-      form-name="your-form-name"
-      v-model="putDataHere"
-      @submit="submit()">
-    </ncform>
-    <el-button @click="submit()">Submit</el-button>
+    <form-wizard ref="catchMe">
+      <tab-content title="Personal details" lazy=true :beforeChange="submit">
+        <ncform
+          :form-schema="formSchema"
+          form-name="your-form-name"
+          v-model="putDataHere"
+          >
+        </ncform>
+      </tab-content>
+      <tab-content title="Additional Info" lazy=true>
+        My second tab content
+      </tab-content>
+    </form-wizard>
 
     Hello from component-a
     <input v-model="message"/>
