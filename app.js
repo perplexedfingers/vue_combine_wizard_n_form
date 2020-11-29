@@ -22,6 +22,28 @@ const ComponentA = {
               delete this.$data.putDataHere.numberShows
             }
             store.commit('a/set', this.$data.putDataHere)
+            if (this.mama === "haha") {
+              let yo = JSON.parse(JSON.stringify(this.$data.notThisName))
+              yo.properties.hideFromHaha.ui.hidden = true
+              this.$data.notThisName = yo
+            }
+            resolve(true)
+          } else {
+            reject('blah')
+          }
+        });
+      })
+    },
+    haha() {
+      return new Promise((resolve, reject) => {
+        this.$ncformValidate('watchForm').then(data => {
+          if (data.result) {
+            const numberShowsDOM = document.querySelector('label[title="hideFromHaha"]')
+            const numberShowsDOMHides = numberShowsDOM.parentNode.style.display === "none"
+            if (numberShowsDOMHides) {
+              delete this.$data.putDataThere.hideFromHaha
+            }
+            store.commit('a/set', this.$data.putDataThere)
             resolve(true)
           } else {
             reject('blah')
@@ -29,6 +51,9 @@ const ComponentA = {
         });
       })
     }
+  },
+  computed: {
+    mama() {return this.$data.putDataHere.name},
   },
   data() {
     return {
@@ -51,28 +76,52 @@ const ComponentA = {
           }
         }
       },
-      putDataHere: {}
+      notThisName: {
+        type: 'object',
+        properties: {
+          blah: {
+            type: 'string',
+            rules: {
+              required: {
+                value: true
+              }
+            }
+          },
+          hideFromHaha: {
+            type: 'boolean',
+            ui: {
+              hidden: false
+            }
+          }
+        },
+      },
+      putDataHere: {},
+      putDataThere: {}
     }
   },
   template: `
   <div>
     <form-wizard ref="catchMe">
-      <tab-content title="Personal details" lazy=true :beforeChange="submit">
+      <tab-content ref="yo" title="Personal details" :beforeChange="submit">
         <ncform
           :form-schema="formSchema"
           form-name="your-form-name"
           v-model="putDataHere"
-          >
+        >
         </ncform>
       </tab-content>
+
       <tab-content title="Additional Info" lazy=true>
-        My second tab content
+        <ncform
+          :form-schema="notThisName"
+          form-name="watchForm"
+          v-model="putDataThere"
+        >
+        </ncform>
       </tab-content>
     </form-wizard>
 
     Hello from component-a
-    <input v-model="message"/>
-    <p>{{ this.message }}</p>
   </div>`,
   beforeCreate: function() {
     store.registerModule(
