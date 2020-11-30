@@ -20,8 +20,12 @@ const ComponentA = {
             }
 
             let yo = JSON.parse(JSON.stringify(this.tab2schema))
-            yo.properties.hideFromHaha.ui.hidden = this.mama === "haha"
-            this.$data.tab2schema = yo
+            if (yo.properties.hideFromHaha.ui) {
+              yo.properties.hideFromHaha.ui.hidden = this.mama === "haha"
+            } else {
+              yo.properties.hideFromHaha.ui = {hidden: this.mama === "haha"}
+            }
+            this.tab2schema = yo
 
             resolve(true)
           } else {
@@ -46,10 +50,34 @@ const ComponentA = {
           }
         });
       })
-    }
+    },
+    genReview(prevIndex, nextIndex) {
+      if (nextIndex + 1 === this.$refs.catchMe.tabs.length) {
+        let yo = {
+          type: 'object',
+          properties: {
+            ...JSON.parse(JSON.stringify(this.tab1schema.properties)),
+            ...JSON.parse(JSON.stringify(this.tab2schema.properties)),
+          }
+        }
+        const generateReviewItem = (reviewTabSchema, tabData) => {
+          Object.entries(tabData).forEach(([key, value]) => {
+            reviewTabSchema.properties[key].value = value
+            if (reviewTabSchema.properties[key].ui) {
+              reviewTabSchema.properties[key].ui.disabled = true
+            } else {
+              reviewTabSchema.properties[key].ui = {disabled: true}
+            }
+          })
+        }
+        this.tabsData.forEach(tabData => generateReviewItem(yo, tabData))
+        this.tab3schema = yo
+      }
+    },
   },
   computed: {
     mama() {return this.tab1data.name},
+    tabsData() {return [this.tab1data, this.tab2data]}
   },
   data() {
     return {
@@ -75,7 +103,7 @@ const ComponentA = {
       tab2schema: {
         type: 'object',
         properties: {
-          blah: {
+          hideFromHaha: {
             type: 'string',
             rules: {
               required: {
@@ -83,7 +111,7 @@ const ComponentA = {
               }
             }
           },
-          hideFromHaha: {
+          blah: {
             type: 'boolean',
             ui: {
               hidden: false
@@ -91,13 +119,17 @@ const ComponentA = {
           }
         },
       },
+      tab3schema: {
+        type: 'object',
+        properties: {}
+      },
       tab1data: {},
-      tab2data: {}
+      tab2data: {},
     }
   },
   template: `
   <div>
-    <form-wizard ref="catchMe" @on-complete="submit">
+    <form-wizard ref="catchMe" @on-complete="submit" @on-change="genReview">
       <tab-content title="Personal details" lazy=true :beforeChange="tab1validate">
         <ncform
           :form-schema="tab1schema"
@@ -112,6 +144,14 @@ const ComponentA = {
           :form-schema="tab2schema"
           form-name="tab2"
           v-model="tab2data"
+        >
+        </ncform>
+      </tab-content>
+
+      <tab-content title="Feed me" lazy=true :beforeChange="()=>true">
+        <ncform
+          :form-schema="tab3schema"
+          form-name="tab3"
         >
         </ncform>
       </tab-content>
