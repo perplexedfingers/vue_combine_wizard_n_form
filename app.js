@@ -5,28 +5,24 @@ Vue.use(vueNcform, { extComponents: ncformStdComps});
 const store = new Vuex.Store({})
 
 const ComponentA = {
-  computed: {
-    message: {
-      get () {return store.state.a.message},
-      set (value) {store.commit('a/set', value)}
-    }
-  },
   methods: {
     submit() {
+      store.commit('form1/set', {...this.tab1data, ...this.tab2data})
+    },
+    tab1validate() {
       return new Promise((resolve, reject) => {
-        this.$ncformValidate('your-form-name').then(data => {
+        this.$ncformValidate('tab1').then(data => {
           if (data.result) {
-            const numberShowsDOM = document.querySelector('label[title="numberShows"]')
-            const numberShowsDOMHides = numberShowsDOM.parentNode.style.display === "none"
+            const numberShowsDOMHides = document.querySelector('label[title="numberShows"]').parentNode
+              .style.display === "none"
             if (numberShowsDOMHides) {
-              delete this.$data.putDataHere.numberShows
+              delete this.tab1data.numberShows
             }
-            store.commit('a/set', this.$data.putDataHere)
-            if (this.mama === "haha") {
-              let yo = JSON.parse(JSON.stringify(this.$data.notThisName))
-              yo.properties.hideFromHaha.ui.hidden = true
-              this.$data.notThisName = yo
-            }
+
+            let yo = JSON.parse(JSON.stringify(this.tab2schema))
+            yo.properties.hideFromHaha.ui.hidden = this.mama === "haha"
+            this.$data.tab2schema = yo
+
             resolve(true)
           } else {
             reject('blah')
@@ -34,16 +30,16 @@ const ComponentA = {
         });
       })
     },
-    haha() {
+    tab2validate() {
       return new Promise((resolve, reject) => {
-        this.$ncformValidate('watchForm').then(data => {
+        this.$ncformValidate('tab2').then(data => {
           if (data.result) {
-            const numberShowsDOM = document.querySelector('label[title="hideFromHaha"]')
-            const numberShowsDOMHides = numberShowsDOM.parentNode.style.display === "none"
-            if (numberShowsDOMHides) {
-              delete this.$data.putDataThere.hideFromHaha
+            const hideFromHAHDOMEHides = document.querySelector('label[title="hideFromHaha"]').parentNode
+              .style.display === "none"
+            if (hideFromHAHDOMEHides) {
+              delete this.tab2data.hideFromHaha
             }
-            store.commit('a/set', this.$data.putDataThere)
+
             resolve(true)
           } else {
             reject('blah')
@@ -53,11 +49,11 @@ const ComponentA = {
     }
   },
   computed: {
-    mama() {return this.$data.putDataHere.name},
+    mama() {return this.tab1data.name},
   },
   data() {
     return {
-      formSchema: {
+      tab1schema: {
         type: 'object',
         properties: {
           name: {
@@ -71,12 +67,12 @@ const ComponentA = {
           numberShows: {
             type: 'boolean',
             ui: {
-              hidden: 'dx: !Number.isNaN(Number.parseFloat( {{$root.name}} ))'
+              hidden: 'dx: !Number.isNaN(Number.parseFloat( {{$root.name}} )) && !Number.isNaN( {{$root.name}} )'
             }
           }
         }
       },
-      notThisName: {
+      tab2schema: {
         type: 'object',
         properties: {
           blah: {
@@ -95,37 +91,39 @@ const ComponentA = {
           }
         },
       },
-      putDataHere: {},
-      putDataThere: {}
+      tab1data: {},
+      tab2data: {}
     }
   },
   template: `
   <div>
-    <form-wizard ref="catchMe">
-      <tab-content ref="yo" title="Personal details" :beforeChange="submit">
+    <form-wizard ref="catchMe" @on-complete="submit">
+      <tab-content title="Personal details" lazy=true :beforeChange="tab1validate">
         <ncform
-          :form-schema="formSchema"
-          form-name="your-form-name"
-          v-model="putDataHere"
+          :form-schema="tab1schema"
+          form-name="tab1"
+          v-model.lazy="tab1data"
         >
         </ncform>
       </tab-content>
 
-      <tab-content title="Additional Info" lazy=true>
+      <tab-content title="Additional Info" lazy=true :beforeChange="tab2validate">
         <ncform
-          :form-schema="notThisName"
-          form-name="watchForm"
-          v-model="putDataThere"
+          :form-schema="tab2schema"
+          form-name="tab2"
+          v-model="tab2data"
         >
         </ncform>
       </tab-content>
     </form-wizard>
 
-    Hello from component-a
+    Final data
+    {{this.$store.state.form1.message}}
+    Final data
   </div>`,
   beforeCreate: function() {
     store.registerModule(
-    'a',
+    'form1',
       {
         namespaced: true,
         state: () => ({
